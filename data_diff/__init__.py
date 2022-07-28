@@ -30,7 +30,7 @@ def connect_to_table(
 
     db = connect(db_info, thread_count=thread_count)
 
-    if isinstance(table_name, str):
+    if isinstance(table_name, str) and 'duckdb' not in db_info:
         table_name = db.parse_table_name(table_name)
 
     return TableSegment(db, table_name, key_column, **kwargs)

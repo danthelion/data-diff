@@ -6,7 +6,7 @@ import os
 from numbers import Number
 from operator import attrgetter, methodcaller
 from collections import defaultdict
-from typing import List, Tuple, Iterator, Optional
+from typing import List, Tuple, Iterator, Optional, Union
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -66,7 +66,7 @@ class TableSegment:
 
     # Location of table
     database: Database
-    table_path: DbPath
+    table_path: Union[DbPath, str]
 
     # Columns
     key_column: str
@@ -160,8 +160,12 @@ class TableSegment:
             *([] if self.where is None else [self.where]),
         ]
         order_by = None if order_by is None else [order_by]
+        if self.database.name == "DuckDb":
+            table_name = f"dd.{self.database._args.get('table_name')}"
+        else:
+            table_name = table or TableName(self.table_path)
         return Select(
-            table=table or TableName(self.table_path),
+            table=table_name,
             where=where,
             columns=columns,
             group_by=group_by,

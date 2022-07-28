@@ -40,6 +40,7 @@ snowflake-connector-python = "*"
 trino = "^0.314.0"
 psycopg2 = "*"
 presto-python-client = "*"
+duckdb = "^0.4.0"
 
 [tool.poetry.extras]
 # When adding, update also: README + dev deps just above

@@ -14,6 +14,7 @@ from .redshift import Redshift
 from .presto import Presto
 from .databricks import Databricks
 from .trino import Trino
+from .duckdb import DuckDb
 
 
 @dataclass
@@ -85,6 +86,7 @@ MATCH_URI_PATH = {
         help_str="databricks://:access_token@server_name/http_path",
     ),
     "trino": MatchUriPath(Trino, ["catalog", "schema"], help_str="trino://<user>@<host>/<catalog>/<schema>"),
+    "duckdb": MatchUriPath(DuckDb, ["file_path"], help_str="duckdb://<file_path>"),
 }
 
 
@@ -124,6 +126,12 @@ def connect_to_uri(db_uri: str, thread_count: Optional[int] = 1) -> Database:
 
     cls = matcher.database_cls
 
+    if scheme == "duckdb":
+        kw = {
+            "file_path": dsn.database,
+            "table_name": dsn.database.split("/")[-1].split(".")[0],
+        }
+
     if scheme == "databricks":
         assert not dsn.user
         kw = {}
@@ -131,9 +139,8 @@ def connect_to_uri(db_uri: str, thread_count: Optional[int] = 1) -> Database:
         kw["http_path"] = dsn.path
         kw["server_hostname"] = dsn.host
         kw.update(dsn.query)
-    else:
+    elif scheme != "duckdb":
         kw = matcher.match_path(dsn)
-
         if scheme == "bigquery":
             kw["project"] = dsn.host
             return cls(**kw)
@@ -143,7 +150,6 @@ def connect_to_uri(db_uri: str, thread_count: Optional[int] = 1) -> Database:
             assert not dsn.port
             kw["user"] = dsn.user
             kw["password"] = dsn.password
-        else:
             kw["host"] = dsn.host
             kw["port"] = dsn.port
             kw["user"] = dsn.user
